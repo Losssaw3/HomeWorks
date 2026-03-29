@@ -41,8 +41,10 @@ func walkDir(out io.Writer, path string, printFiles bool, tabs string) error {
 	}
 	if printFiles {
 		for idx, dir := range dirs {
+			p := filepath.Join(path, dir.Name())
 			if idx == len(dirs)-1 {
 				err = processLastIdx(out, dir, tabs, printFiles)
+				walkDir(out, p, printFiles, tabs+"\t")
 				if err != nil {
 					return err
 				}
@@ -60,16 +62,9 @@ func walkDir(out io.Writer, path string, printFiles bool, tabs string) error {
 						strSizeFormat = "(" + strconv.Itoa(int(fileInfo.Size())) + "b)"
 					}
 					fmt.Fprintln(out, tabs+"├───"+dir.Name(), strSizeFormat)
-				}
 
-			}
-			if dir.IsDir() {
-				p := filepath.Join(path, dir.Name())
-				if idx == len(dirs)-1 {
-					walkDir(out, p, printFiles, tabs+"\t")
-				} else {
-					walkDir(out, p, printFiles, tabs+"│\t")
 				}
+				walkDir(out, p, printFiles, tabs+"│\t")
 			}
 		}
 	} else {
@@ -80,26 +75,21 @@ func walkDir(out io.Writer, path string, printFiles bool, tabs string) error {
 			}
 		}
 		for idx, dir := range onlyDirs {
-			if idx == len(onlyDirs)-1 {
-				processLastIdx(out, dir, tabs, printFiles)
-			} else {
-				fmt.Fprintln(out, tabs+"├───"+dir.Name())
-			}
 			p := filepath.Join(path, dir.Name())
 			if idx == len(onlyDirs)-1 {
+				processLastIdx(out, dir, tabs, printFiles)
 				walkDir(out, p, printFiles, tabs+"\t")
 			} else {
+				fmt.Fprintln(out, tabs+"├───"+dir.Name())
 				walkDir(out, p, printFiles, tabs+"│\t")
 			}
 		}
-
 	}
 	return nil
 }
 
 func dirTree(out io.Writer, path string, printFiles bool) error {
-	tabs := ""
-	err := walkDir(out, path, printFiles, tabs)
+	err := walkDir(out, path, printFiles, "")
 	return err
 }
 
