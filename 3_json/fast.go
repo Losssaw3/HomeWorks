@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"hw3/models"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 // вам надо написать более быструю оптимальную этой функции
 func FastSearch(out io.Writer) {
+
 	/*
 		!!! !!! !!!
 		обратите внимание - в задании обязательно нужен отчет
@@ -21,25 +23,25 @@ func FastSearch(out io.Writer) {
 		перечитайте еще раз задание
 		!!! !!! !!!
 	*/
-	data, err := os.ReadFile("data/users.txt")
+	file, err := os.Open("data/users.txt")
 	if err != nil {
 		panic(err)
 	}
-
-	lines := strings.Split(string(data), "\n")
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
 	var user models.User
 	uniqueBrowsers := make(map[string]bool, 150)
 	var sb strings.Builder
 	var android bool
 	var msie bool
+	idx := 0
 	fmt.Fprintln(out, "found users:")
-	for idx, line := range lines {
+	for scanner.Scan() {
+		line := scanner.Bytes()
 		err := easyjson.Unmarshal([]byte(line), &user)
-
 		if err != nil {
 			panic(err)
 		}
-
 		for _, browser := range user.Browser {
 			if okA, okM := strings.Contains(browser, "Android"), strings.Contains(browser, "MSIE"); okA || okM {
 				if _, status := uniqueBrowsers[browser]; !status {
@@ -63,10 +65,13 @@ func FastSearch(out io.Writer) {
 		}
 		android = false
 		msie = false
-
+		idx++
+	}
+	fmt.Fprintln(out, "\nTotal unique browsers", len(uniqueBrowsers))
+	if err := scanner.Err(); err != nil {
+		panic(err)
 	}
 
-	fmt.Fprintln(out, "\nTotal unique browsers", len(uniqueBrowsers))
 }
 
 func FormatWithGrow(sb *strings.Builder, i int, name, email string) string {
