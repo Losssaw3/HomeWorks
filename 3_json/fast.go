@@ -37,8 +37,7 @@ func FastSearch(out io.Writer) {
 	idx := 0
 	fmt.Fprintln(out, "found users:")
 	for scanner.Scan() {
-		line := scanner.Bytes()
-		err := easyjson.Unmarshal([]byte(line), &user)
+		err := easyjson.Unmarshal(scanner.Bytes(), &user)
 		if err != nil {
 			panic(err)
 		}
@@ -90,7 +89,6 @@ func FormatWithGrow(sb *strings.Builder, i int, name, email string) string {
 }
 
 func main() {
-
 	out := os.Stdout
 	FastSearch(out)
 }
