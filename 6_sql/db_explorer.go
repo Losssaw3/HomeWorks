@@ -156,29 +156,29 @@ func getDataFromTableById(helper *DbHelper, table string, id int) (DbResponse, e
 	res := make(map[string]any)
 	if !rows.Next() {
 		return DbResponse{"error": "record not found"}, fmt.Errorf("row with id %d not found", id)
-	} else {
+	}
 
-		cols, _ := rows.Columns()
-		columms := make([]any, len(cols))
-		ptr := make([]any, len(cols))
-		for i := range columms {
-			ptr[i] = &columms[i]
-		}
+	cols, _ := rows.Columns()
+	columms := make([]any, len(cols))
+	ptr := make([]any, len(cols))
+	for i := range columms {
+		ptr[i] = &columms[i]
+	}
 
-		err := rows.Scan(ptr...)
-		if err != nil {
-			return DbResponse{"status": "fail"}, err
-		}
+	err = rows.Scan(ptr...)
+	if err != nil {
+		return DbResponse{"status": "fail"}, err
+	}
 
-		for i, colName := range cols {
-			val := columms[i]
-			if b, ok := val.([]byte); ok {
-				res[colName] = string(b)
-			} else {
-				res[colName] = val
-			}
+	for i, colName := range cols {
+		val := columms[i]
+		if b, ok := val.([]byte); ok {
+			res[colName] = string(b)
+		} else {
+			res[colName] = val
 		}
 	}
+
 	if err := rows.Err(); err != nil {
 		return DbResponse{"error": "Internal database error"}, err
 	}
@@ -247,7 +247,7 @@ func PutRecordIntoTable(helper *DbHelper, table string, payload map[string]any) 
 	return DbResponse{"response": response}, nil
 }
 
-func UpdateRecordInTable(helper *DbHelper, table string, Id int, payload map[string]any) (DbResponse, error) {
+func UpdateRecordInTable(helper *DbHelper, table string, id int, payload map[string]any) (DbResponse, error) {
 	if ok := helper.tables[table]; !ok {
 		return DbResponse{"error": "unknown table"}, fmt.Errorf("no table found with name %s", table)
 	}
@@ -289,7 +289,7 @@ func UpdateRecordInTable(helper *DbHelper, table string, Id int, payload map[str
 		setParts = append(setParts, fmt.Sprintf("`%s` = ?", col))
 		vals = append(vals, val)
 	}
-	vals = append(vals, Id)
+	vals = append(vals, id)
 
 	query := fmt.Sprintf("UPDATE `%s` SET %s WHERE `%s` = ?",
 		table,
@@ -311,7 +311,7 @@ func UpdateRecordInTable(helper *DbHelper, table string, Id int, payload map[str
 	return DbResponse{"response": response}, nil
 }
 
-func DeleteRecordFromTable(helper *DbHelper, table string, Id int) (DbResponse, error) {
+func DeleteRecordFromTable(helper *DbHelper, table string, id int) (DbResponse, error) {
 	if ok := helper.tables[table]; !ok {
 		return DbResponse{"error": "unknown table"}, fmt.Errorf("no table found with name %s", table)
 	}
@@ -320,7 +320,7 @@ func DeleteRecordFromTable(helper *DbHelper, table string, Id int) (DbResponse, 
 		return DbResponse{"error": "Internal database error"}, err
 	}
 	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?", table, pkName)
-	result, err := helper.db.Exec(query, Id)
+	result, err := helper.db.Exec(query, id)
 	if err != nil {
 		return DbResponse{"error": "Internal database error"}, fmt.Errorf("delete error: %w", err) //TODO cast to dbresponse
 	}
@@ -396,14 +396,14 @@ func NewDbExplorer(db *sql.DB) (http.Handler, error) {
 	mux.HandleFunc("GET /{table}/{id}", func(w http.ResponseWriter, r *http.Request) {
 		tableName := r.PathValue("table")
 		IdString := r.PathValue("id")
-		Id, err := strconv.Atoi(IdString)
+		id, err := strconv.Atoi(IdString)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(err.Error())
 			return
 		}
 
-		data, err := getDataFromTableById(helper, tableName, Id)
+		data, err := getDataFromTableById(helper, tableName, id)
 		if err != nil {
 			if status := data["error"]; status == "Internal database error" {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -452,8 +452,8 @@ func NewDbExplorer(db *sql.DB) (http.Handler, error) {
 
 	mux.HandleFunc("POST /{table}/{id}", func(w http.ResponseWriter, r *http.Request) {
 		tableName := r.PathValue("table")
-		IdString := r.PathValue("id")
-		Id, err := strconv.Atoi(IdString)
+		idString := r.PathValue("id")
+		id, err := strconv.Atoi(idString)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(err.Error())
@@ -466,7 +466,7 @@ func NewDbExplorer(db *sql.DB) (http.Handler, error) {
 			json.NewEncoder(w).Encode(err.Error())
 			return
 		}
-		num, err := UpdateRecordInTable(helper, tableName, Id, payload)
+		num, err := UpdateRecordInTable(helper, tableName, id, payload)
 		if err != nil {
 			if status := num["error"]; status == "Internal database error" {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -486,13 +486,13 @@ func NewDbExplorer(db *sql.DB) (http.Handler, error) {
 
 	mux.HandleFunc("DELETE /{table}/{id}", func(w http.ResponseWriter, r *http.Request) {
 		tableName := r.PathValue("table")
-		IdString := r.PathValue("id")
-		Id, err := strconv.Atoi(IdString)
+		idString := r.PathValue("id")
+		id, err := strconv.Atoi(idString)
 		if err != nil {
 			http.Error(w, "Ошибка", http.StatusInternalServerError)
 			return
 		}
-		num, err := DeleteRecordFromTable(helper, tableName, Id)
+		num, err := DeleteRecordFromTable(helper, tableName, id)
 		if err != nil {
 			http.Error(w, "Ошибка", http.StatusInternalServerError)
 			return
