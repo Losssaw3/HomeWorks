@@ -20,21 +20,16 @@ const (
 	stateStateWaitForCity
 )
 
-type weatherServiceI interface {
-	GetWeatherByCoords(lat, long string) (*services.WeatherResponce, error)
-	GetWeatherByCity(cityName, countryCode string) (*services.WeatherResponce, error)
-}
-
 type State int
 
 var userStates = make(map[int64]State)
 
 type tgBot struct {
 	bot     *tgbotapi.BotAPI
-	service weatherServiceI
+	service services.WeatherServiceI
 }
 
-func NewBot(token string, service weatherServiceI) *tgBot {
+func NewBot(token string, service services.WeatherServiceI) *tgBot {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		panic(err)
