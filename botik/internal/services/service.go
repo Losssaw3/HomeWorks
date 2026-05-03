@@ -2,19 +2,17 @@ package services
 
 import (
 	"bot/dto/models"
-	"bot/internal/client"
 )
 
-type WeatherServiceI interface {
-	GetWeatherByCoords(lat, long string) (*models.WeatherResponce, error)
-	GetWeatherByCity(cityName, countryCode string) (*models.WeatherResponce, error)
+type WeatherApiClientI interface {
+	GetCoords(city, countryCode string) (*models.RawWeatherDTO, error)
+	GetWeatherByCoords(lat, lon string) (*models.RawWeatherDTO, error)
 }
-
 type weatherService struct {
-	client *client.WeatherApiClient
+	client WeatherApiClientI
 }
 
-func NewWeatherService(client *client.WeatherApiClient) *weatherService {
+func NewWeatherService(client WeatherApiClientI) *weatherService {
 	return &weatherService{client: client}
 }
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"bot/internal/services"
+	"bot/dto/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -24,12 +24,17 @@ type State int
 
 var userStates = make(map[int64]State)
 
-type tgBot struct {
-	bot     *tgbotapi.BotAPI
-	service services.WeatherServiceI
+type WeatherServiceI interface {
+	GetWeatherByCoords(lat, long string) (*models.WeatherResponce, error)
+	GetWeatherByCity(cityName, countryCode string) (*models.WeatherResponce, error)
 }
 
-func NewBot(token string, service services.WeatherServiceI) *tgBot {
+type tgBot struct {
+	bot     *tgbotapi.BotAPI
+	service WeatherServiceI
+}
+
+func NewBot(token string, service WeatherServiceI) *tgBot {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		panic(err)
