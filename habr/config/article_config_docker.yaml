@@ -1,0 +1,15 @@
+env: "docker"
+
+migrations_path: "/app/migrations"
+
+http_addr: "0.0.0.0:8080"
+
+name: "article_service"
+
+grpc_addr: "sso:44044"
+
+redis_addr: "redis:6379"
+
+redis_db_num: 0
+
+redis_ttl: 5m

@@ -1,0 +1,13 @@
+# config/config_docker.yaml
+
+env: "docker"
+grpc:
+  port: 44044
+  timeout: 10h
+
+kafka:
+  brokers:
+    - "kafka1:9092"
+    - "kafka2:9092"
+  topic: "notifications"
+  group_id: "notification-service-group"

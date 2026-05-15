@@ -1,0 +1,8 @@
+# config/notification_config_docker.yaml
+
+env: docker
+kafka:
+  brokers:
+    - "kafka1:9092"
+  topic: "notifications"
+  group_id: "notification-service-group"

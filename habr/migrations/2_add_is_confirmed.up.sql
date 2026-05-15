@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN is_confirmed BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE users ADD COLUMN confirmation_token TEXT;

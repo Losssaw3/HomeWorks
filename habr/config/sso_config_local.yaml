@@ -1,0 +1,13 @@
+# config/config_local.yaml
+
+env: "local"
+grpc:
+  port: 44044
+  timeout: 10h
+
+kafka:
+  brokers:
+    - "localhost:9092"
+    - "localhost:9093"
+  topic: "notifications"
+  group_id: "notification-service-group"

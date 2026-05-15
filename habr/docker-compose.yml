@@ -1,0 +1,66 @@
+services:
+    postgres:
+      image: postgres:16-alpine
+      environment:
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
+      volumes: [pgdata:/var/lib/postgresql/data]
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 3s
+        retries: 10
+
+    redis:
+      image: redis:7-alpine
+
+    kafka1:
+      image: bitnamilegacy/kafka:3.7.1
+      environment:
+        KAFKA_CFG_NODE_ID: 1
+        KAFKA_CFG_PROCESS_ROLES: controller,broker
+        KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+        KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
+        KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093
+        KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+    migrator:
+      build: { context: ., args: { SERVICE: migrator } }
+      depends_on:
+        postgres: { condition: service_healthy }
+      command:
+        - --db-url=${STORAGE_PATH}
+        - --migrations-path=/app/migrations
+      restart: "no"
+
+    sso:
+      build: { context: ., args: { SERVICE: sso } }
+      depends_on:
+        migrator: { condition: service_completed_successfully }
+      environment:
+        STORAGE_PATH: ${STORAGE_PATH}
+      ports: ["44044:44044"]
+      command: ["--config=/app/config/sso_config_docker.yaml"]
+
+    article:
+      build: { context: ., args: { SERVICE: article } }
+      depends_on:
+        migrator: { condition: service_completed_successfully }
+        redis: { condition: service_started }
+      environment:
+        STORAGE_PATH: ${STORAGE_PATH}
+        APP_SECRET: ${APP_SECRET}
+        REDIS_PASSWORD: ${REDIS_PASSWORD}
+      ports: ["8080:8080"]
+      command: ["--config=/app/config/article_config_docker.yaml"]
+
+    notification:
+      build: { context: ., args: { SERVICE: notification } }
+      depends_on:
+        migrator: { condition: service_completed_successfully }
+        kafka1: { condition: service_started }
+      environment:
+        STORAGE_PATH: ${STORAGE_PATH}
+      command: ["--config=/app/config/notification_config_docker.yaml"]
+
+volumes:
+  pgdata:

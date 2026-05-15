@@ -1,0 +1,15 @@
+env: "local"
+
+migrations_path: "./migrations"
+
+http_addr: "localhost:8080"
+
+name: "article_service"
+
+grpc_addr: "localhost:44044"
+
+redis_addr: "localhost:6379"
+
+redis_db_num: 0
+
+redis_ttl: 5m
